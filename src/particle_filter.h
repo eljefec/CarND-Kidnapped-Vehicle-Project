@@ -15,7 +15,7 @@
 
 struct Particle {
 
-    int id;
+    const int id;
     double x;
     double y;
     double theta;
@@ -23,6 +23,12 @@ struct Particle {
     std::vector<int> associations;
     std::vector<double> sense_x;
     std::vector<double> sense_y;
+
+    /*
+     * Set a particles list of associations, along with the associations calculated world x,y coordinates
+     * This can be a very useful debugging tool to make sure transformations are correct and assocations correctly connected
+     */
+    void SetAssociations(const std::vector<int>& associations, const std::vector<double>& sense_x, const std::vector<double>& sense_y);
 };
 
 
@@ -100,15 +106,9 @@ public:
      */
     void resample();
 
-    /*
-     * Set a particles list of associations, along with the associations calculated world x,y coordinates
-     * This can be a very useful debugging tool to make sure transformations are correct and assocations correctly connected
-     */
-    Particle SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y);
-
-    std::string getAssociations(Particle best);
-    std::string getSenseX(Particle best);
-    std::string getSenseY(Particle best);
+    std::string getAssociations(const Particle& best);
+    std::string getSenseX(const Particle& best);
+    std::string getSenseY(const Particle& best);
 
     /**
      * initialized Returns whether particle filter is initialized yet or not.

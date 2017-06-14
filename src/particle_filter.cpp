@@ -138,26 +138,18 @@ void ParticleFilter::resample() {
 
 }
 
-Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
+void Particle::SetAssociations(const std::vector<int>& new_associations, const std::vector<double>& new_sense_x, const std::vector<double>& new_sense_y)
 {
-    //particle: the particle to assign each listed association, and association's (x,y) world coordinates mapping to
-    // associations: The landmark id that goes along with each listed association
-    // sense_x: the associations x mapping already converted to world coordinates
-    // sense_y: the associations y mapping already converted to world coordinates
+    // new_associations: The landmark id that goes along with each listed association
+    // new_sense_x: the associations x mapping already converted to world coordinates
+    // new_sense_y: the associations y mapping already converted to world coordinates
 
-    //Clear the previous associations
-    particle.associations.clear();
-    particle.sense_x.clear();
-    particle.sense_y.clear();
-
-    particle.associations= associations;
-    particle.sense_x = sense_x;
-    particle.sense_y = sense_y;
-
-    return particle;
+    associations = new_associations;
+    sense_x = new_sense_x;
+    sense_y = new_sense_y;
 }
 
-string ParticleFilter::getAssociations(Particle best)
+string ParticleFilter::getAssociations(const Particle& best)
 {
     vector<int> v = best.associations;
     stringstream ss;
@@ -166,7 +158,7 @@ string ParticleFilter::getAssociations(Particle best)
     s = s.substr(0, s.length()-1);  // get rid of the trailing space
     return s;
 }
-string ParticleFilter::getSenseX(Particle best)
+string ParticleFilter::getSenseX(const Particle& best)
 {
     vector<double> v = best.sense_x;
     stringstream ss;
@@ -175,7 +167,7 @@ string ParticleFilter::getSenseX(Particle best)
     s = s.substr(0, s.length()-1);  // get rid of the trailing space
     return s;
 }
-string ParticleFilter::getSenseY(Particle best)
+string ParticleFilter::getSenseY(const Particle& best)
 {
     vector<double> v = best.sense_y;
     stringstream ss;

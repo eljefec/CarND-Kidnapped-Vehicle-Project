@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <iterator>
+#include <unordered_map>
 
 #include "particle_filter.h"
 
@@ -136,9 +137,57 @@ void ParticleFilter::dataAssociation(const std::vector<LandmarkObs>& predictions
     }
 }
 
+LandmarkObs TransformObservationToMapCoordinates(const LandmarkObs& obs, const Particle& p)
+{
+    double costheta = cos(p.theta);
+    double sintheta = sin(p.theta);
+
+    double x = (obs.x * costheta) - (obs.y * sintheta) + p.x;
+    double y = (obs.x * sintheta) + (obs.y * costheta) + p.y;
+
+    return LandmarkObs { -1, x, y };
+}
+
+double MultivariateGaussianProbability(const LandmarkObs& obs, const LandmarkObs& landmark, const double std_landmark[])
+{
+    const double std_x = std_landmark[0];
+    const double std_y = std_landmark[1];
+
+    double exponent = -((obs.x - landmark.x) * (obs.x - landmark.x) / (2 * std_x * std_x)
+                      + (obs.y - landmark.y) * (obs.y - landmark.y) / (2 * std_y * std_y));
+
+    double denominator = 2 * M_PI * std_x * std_y;
+
+    return (1 / denominator) * exp(exponent);
+}
+
+std::vector<LandmarkObs> MakeLandmarks(const Map& map_landmarks)
+{
+    std::vector<LandmarkObs> landmarks;
+
+    for (const auto& landmark : map_landmarks.landmark_list)
+    {
+        landmarks.emplace_back( LandmarkObs { landmark.id_i, landmark.x_f, landmark.y_f } );
+    }
+
+    return landmarks;
+}
+
+std::unordered_map<int, const LandmarkObs*> MakeLandmarkIdMap(const std::vector<LandmarkObs>& landmarks)
+{
+    std::unordered_map<int, const LandmarkObs*> landmarkIdMap;
+
+    for (const auto& landmark : landmarks)
+    {
+        landmarkIdMap[landmark.id] = &landmark;
+    }
+
+    return landmarkIdMap;
+}
+
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         std::vector<LandmarkObs> observations, Map map_landmarks) {
-    // TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
+    // Update the weights of each particle using a mult-variate Gaussian distribution. You can read
     //   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
     // NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
     //   according to the MAP'S coordinate system. You will need to transform between the two systems.
@@ -148,6 +197,44 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     //   and the following is a good resource for the actual equation to implement (look at equation
     //   3.33
     //   http://planning.cs.uiuc.edu/node99.html
+
+    const auto c_landmarks = MakeLandmarks(map_landmarks);
+    const auto c_landmarkIdMap = MakeLandmarkIdMap(c_landmarks);
+
+    for (Particle& p : particles)
+    {
+        // Transform observation by the particle's position and orientation
+        std::vector<LandmarkObs> transformed_observations;
+        for (LandmarkObs& obs : observations)
+        {
+            transformed_observations.emplace_back(TransformObservationToMapCoordinates(obs, p));
+        }
+
+        // Associate observation with closest landmark.
+        dataAssociation(c_landmarks, transformed_observations);
+
+        // Estimate probability of correspondence between each observation and its associated landmark.
+        double finalWeight = 1.0;
+
+        for (LandmarkObs& obs : transformed_observations)
+        {
+            auto it = c_landmarkIdMap.find(obs.id);
+
+            if (it == c_landmarkIdMap.end())
+            {
+                throw std::runtime_error("Landmark not found. Fatal error.");
+            }
+
+            const LandmarkObs& landmark = *(it->second);
+
+            double prob = MultivariateGaussianProbability(obs, landmark, std_landmark);
+
+            finalWeight *= prob;
+        }
+
+        // Update weight.
+        p.weight = finalWeight;
+    }
 }
 
 void ParticleFilter::resample() {

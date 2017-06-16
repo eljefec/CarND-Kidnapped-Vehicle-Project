@@ -139,6 +139,8 @@ void ParticleFilter::dataAssociation(const std::vector<LandmarkObs>& predictions
 
 LandmarkObs TransformObservationToMapCoordinates(const LandmarkObs& obs, const Particle& p)
 {
+    // This is based on equation 3.33 from http://planning.cs.uiuc.edu/node99.html
+
     double costheta = cos(p.theta);
     double sintheta = sin(p.theta);
 

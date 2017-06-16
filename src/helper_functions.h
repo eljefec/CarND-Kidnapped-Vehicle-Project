@@ -58,6 +58,11 @@ struct LandmarkObs {
     }
 };
 
+inline std::ostream& operator<<(std::ostream& os, const LandmarkObs& o)
+{
+    os << "obs id=" << o.id << "(" << o.x << ',' << o.y << ")";
+}
+
 inline double * getError(double gt_x, double gt_y, double gt_theta, double pf_x, double pf_y, double pf_theta) {
     static double error[3];
     error[0] = fabs(pf_x - gt_x);

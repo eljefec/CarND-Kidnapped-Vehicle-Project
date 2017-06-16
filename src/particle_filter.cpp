@@ -45,7 +45,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     // Add random Gaussian noise to each particle.
     // NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-    num_particles = 100;
+    num_particles = 20;
 
     double initials[] = { x, y, theta };
 
@@ -62,6 +62,11 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
                        {},
                        {},
                        {} });
+    }
+
+    for (auto& p : particles)
+    {
+        std::cout << "DEBUG: " << __func__ << p << std::endl;
     }
 
     is_initialized = true;
@@ -98,6 +103,11 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
         }
     }
 
+    for (auto& p : particles)
+    {
+        std::cout << "DEBUG: " << __func__ << p << std::endl;
+    }
+
     // Add random Gaussian noise.
     double initials[] = { 0, 0, 0 };
 
@@ -109,6 +119,11 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
         p.y += distributions[1](m_random_engine);
         p.theta += distributions[2](m_random_engine);
     }
+
+    for (auto& p : particles)
+    {
+        std::cout << "DEBUG: " << __func__ << p << std::endl;
+    }
 }
 
 void ParticleFilter::dataAssociation(const std::vector<LandmarkObs>& predictions, std::vector<LandmarkObs>& observations) {
@@ -117,11 +132,11 @@ void ParticleFilter::dataAssociation(const std::vector<LandmarkObs>& predictions
     // NOTE: this method will NOT be called by the grading code. But you will probably find it useful to
     //   implement this method and use it as a helper during the updateWeights phase.
 
-    int closest_id = -1;
-    double closest_distance = std::numeric_limits<double>::max();
-
     for (auto& observation : observations)
     {
+        int closest_id = -1;
+        double closest_distance = std::numeric_limits<double>::max();
+
         for (const auto& prediction : predictions)
         {
             double dist = observation.distance(prediction);
@@ -168,6 +183,8 @@ std::vector<LandmarkObs> MakeLandmarks(const Map& map_landmarks)
     for (const auto& landmark : map_landmarks.landmark_list)
     {
         landmarks.emplace_back( LandmarkObs { landmark.id_i, landmark.x_f, landmark.y_f } );
+
+        std::cout << "DEBUG: map " << landmarks.back() << std::endl;
     }
 
     return landmarks;
@@ -208,10 +225,18 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         for (LandmarkObs& obs : observations)
         {
             transformed_observations.emplace_back(TransformObservationToMapCoordinates(obs, p));
+
+            std::cout << "DEBUG: orig " << obs << std::endl;
+            std::cout << "DEBUG: trans " << transformed_observations.back() << std::endl;
         }
 
         // Associate observation with closest landmark.
         dataAssociation(c_landmarks, transformed_observations);
+
+        for (const auto& obs : transformed_observations)
+        {
+            std::cout << "DEBUG: assoc " << obs << std::endl;
+        }
 
         // Estimate probability of correspondence between each observation and its associated landmark.
         double finalWeight = 1.0;

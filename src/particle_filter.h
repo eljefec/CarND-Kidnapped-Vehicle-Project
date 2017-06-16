@@ -15,7 +15,7 @@
 
 struct Particle {
 
-    const int id;
+    int id;
     double x;
     double y;
     double theta;
@@ -31,7 +31,7 @@ struct Particle {
     void SetAssociations(const std::vector<int>& associations, const std::vector<double>& sense_x, const std::vector<double>& sense_y);
 };
 
-
+std::ostream& operator<<(std::ostream& os, const Particle& p);
 
 class ParticleFilter {
 

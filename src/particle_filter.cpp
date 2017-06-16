@@ -238,10 +238,24 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 }
 
 void ParticleFilter::resample() {
-    // TODO: Resample particles with replacement with probability proportional to their weight.
+    // Resample particles with replacement with probability proportional to their weight.
     // NOTE: You may find std::discrete_distribution helpful here.
     //   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
+    std::vector<Particle> resampled;
+    std::vector<double> weights;
+    for (const auto& p : particles)
+    {
+        weights.emplace_back(p.weight);
+    }
+
+    std::discrete_distribution<int> distribution(weights.begin(), weights.end());
+    for (int i = 0; i < num_particles; ++i)
+    {
+        resampled.push_back(particles[distribution(m_random_engine)]);
+    }
+
+    particles = resampled;
 }
 
 void Particle::SetAssociations(const std::vector<int>& new_associations, const std::vector<double>& new_sense_x, const std::vector<double>& new_sense_y)
@@ -253,6 +267,11 @@ void Particle::SetAssociations(const std::vector<int>& new_associations, const s
     associations = new_associations;
     sense_x = new_sense_x;
     sense_y = new_sense_y;
+}
+
+std::ostream& operator<<(std::ostream& os, const Particle& p)
+{
+    os << "id=" << p.id << ",(" << p.x << ',' << p.y << "),theta=" << p.theta << ",w=" << p.weight;
 }
 
 string ParticleFilter::getAssociations(const Particle& best)
